@@ -1,0 +1,29 @@
+name: Register Fingerprint
+on:
+  workflow_dispatch:
+    inputs:
+      fingerprint:
+        description: 'Fingerprint to register'
+        required: true
+        type: string
+
+jobs:
+  register:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Register fingerprint
+        run: |
+          mkdir -p fingerprints
+          echo ${{ github.event.inputs.fingerprint }} >> fingerprints/registry.txt
+          sort -u fingerprints/registry.txt -o fingerprints/registry.txt
+
+      - name: Commit and push
+        run: |
+          git config user.name GitHub Actions
+          git config user.email actions@github.com
+          git add fingerprints/
+          git diff --cached --quiet || git commit -m Register fingerprint: ${{ github.event.inputs.fingerprint }}
+          git push
