@@ -30,8 +30,10 @@ jobs:
           FILE="fingerprints/registry.txt"
           mkdir -p "$(dirname "$FILE")"
           touch "$FILE"
-          if ! grep -qxF "$BOARD_ID" "$FILE"; then
-            echo "$BOARD_ID" >> "$FILE"
+          # 兼容旧格式(纯指纹)与新格式(指纹|注册时间)：按 | 分隔取第一列做查重
+          if ! awk -F'|' -v id="$BOARD_ID" '$1==id {found=1} END{exit !found}' "$FILE"; then
+            TS="$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
+            echo "$BOARD_ID|$TS" >> "$FILE"
             git config user.name "vimox-registry-bot"
             git config user.email "actions@users.noreply.github.com"
             git add "$FILE"
